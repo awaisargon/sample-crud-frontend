@@ -1,9 +1,10 @@
 import React from 'react';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Divider, Typography } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import CategoryIcon from '@mui/icons-material/Category';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const drawerWidth = 240;
 
@@ -26,6 +27,13 @@ const menuItems = [
 ]
 
 const SideDrawer = () => {
+
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   return (
     <Drawer
       sx={{
@@ -50,7 +58,7 @@ const SideDrawer = () => {
       <List>
         {
           menuItems.map((item, index) => (
-            <ListItem button component={Link} to={item.link} key={index} sx={{ color: '#fff' }}>
+            <ListItem button="true" component={Link} to={item.link} key={index} sx={{ color: '#fff' }}>
               <ListItemIcon sx={{ color: '#fff' }}>
                 {item.icon}
               </ListItemIcon>
@@ -59,6 +67,12 @@ const SideDrawer = () => {
           ))
         }
       </List>
+      <ListItem button onClick={handleLogout} sx={{ color: '#fff' }} component={Link}>
+          <ListItemIcon sx={{ color: '#fff' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItem>
     </Drawer>
   );
 };

@@ -19,6 +19,16 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    return <Navigate to="/dashboard" />;
+  }
+  return children;
+};
+
+
 const routes = () => [
   {
     path: '/',
@@ -26,7 +36,11 @@ const routes = () => [
   },
   {
     path: '/',
-    element: <PublicLayout />, // Public Layout for non-authenticated routes
+    element: (
+      <PublicRoute>
+        <PublicLayout/>
+      </PublicRoute>
+    ), // Public layout
     children: [
       { path: 'signin', element: <Signin /> },
       { path: 'signup', element: <Signup /> },

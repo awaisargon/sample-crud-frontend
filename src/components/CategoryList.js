@@ -1,26 +1,24 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableRow, IconButton, Pagination, Box } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { IconButton, Box, Typography } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import axios from '../utils/axiosInterceptor';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import LoadingSpinner from './LoadingSpinner';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const CategoryList = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Get current page from searchParams or default to 1
-  const currentPage = parseInt(searchParams.get('page') || '1', 10);
-
-  // Fetch categories with pagination from the backend
-  const { isPending, error, data: categoriesData } = useQuery({
-    queryKey: ['categories', currentPage],
+  // Fetch categories
+  const { isLoading, error, data: categoriesData } = useQuery({
+    queryKey: ['categories'],
     queryFn: async () => {
-      const response = await axios.get(`categories?page=${currentPage}&limit=10`);
-      return response?.data;
-    }
+      const response = await axios.get('categories?limit=10');
+      return response.data;
+    },
+    staleTime: 0
   });
 
   const deleteCategory = useMutation({
@@ -29,52 +27,50 @@ const CategoryList = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['categories']);
-    }
+    },
   });
 
-  const handlePageChange = (event, value) => {
-    setSearchParams({ page: value });
-  };
+  const columns = [
+    { field: 'title', headerName: 'Category Name', flex: 1 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      flex: 1,
+      renderCell: (params) => (
+        <>
+          <IconButton onClick={() => navigate(`/dashboard/categories?updateCatId=${params.id}`)}>
+            <Edit />
+          </IconButton>
+          <IconButton onClick={() => deleteCategory.mutate(params.id)}>
+            <Delete />
+          </IconButton>
+        </>
+      ),
+    },
+  ];
 
-  if (isPending) return <LoadingSpinner />;
-  if (error) return <p>Error fetching categories: {error.message}</p>;
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <Typography color="error">Error fetching categories: {error.message}</Typography>;
+
+  const rows = categoriesData?.data?.map(category => ({
+    id: category._id,
+    title: category.title
+  })) || [];
 
   return (
-    <>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Category Name</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {categoriesData?.data?.map((category) => (
-            <TableRow key={category._id}>
-              <TableCell>{category.title}</TableCell>
-              <TableCell align="right">
-                <IconButton onClick={() => navigate(`/dashboard/categories?updateCatId=${category._id}`)}>
-                  <Edit />
-                </IconButton>
-                <IconButton onClick={() => deleteCategory.mutate(category._id)}>
-                  <Delete />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Pagination Controls */}
-      <Box display="flex" justifyContent="center" mt={2}>
-        <Pagination
-          count={categoriesData?.pagination?.total || 1}
-          page={currentPage}
-          onChange={handlePageChange}
-          color="primary"
-        />
-      </Box>
-    </>
+    <Box sx={{ height: 400, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: 10, page: 0 },
+          },
+        }}
+        pageSizeOptions={[10]}
+        disableRowSelectionOnClick
+      />
+    </Box>
   );
 };
 

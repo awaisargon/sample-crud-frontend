@@ -10,7 +10,7 @@ const CategoryForm = () => {
 
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const cachedCategories = queryClient.getQueryData(['categories']);
+  const cachedCategories = queryClient.getQueryData(['categories']) || [];
   const updateId = searchParams.get('updateCatId')
 
   const validationSchema = Yup.object({
@@ -29,10 +29,10 @@ const CategoryForm = () => {
   });
 
   useEffect(() => {
-    const title = cachedCategories?.filter(cat => cat._id === updateId)[0]?.title;
+    const title = cachedCategories?.data?.filter(cat => cat._id === updateId)[0]?.title;
     formik.setFieldValue('title', title);
     // eslint-disable-next-line
-  }, [updateId])
+  }, [updateId, cachedCategories])
 
   const createCategory = useMutation({
     mutationFn: async (data) => {
